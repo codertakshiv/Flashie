@@ -1,0 +1,31 @@
+{
+  "name": "ESP MQTT Controller",
+  "version": "2.1.0",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "firmware/bootloader.bin", "offset": "0x1000" },
+        { "path": "firmware/partitions.bin", "offset": "0x8000" },
+        { "path": "firmware/firmware.bin", "offset": "0x10000" }
+      ]
+    },
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "firmware/bootloader.bin", "offset": "0x0" },
+        { "path": "firmware/partitions.bin", "offset": "0x8000" },
+        { "path": "firmware/firmware.bin", "offset": "0x10000" }
+      ]
+    },
+    {
+      "chipFamily": "ESP32-C3",
+      "parts": [
+        { "path": "firmware/bootloader.bin", "offset": "0x0" },
+        { "path": "firmware/partitions.bin", "offset": "0x8000" },
+        { "path": "firmware/firmware.bin", "offset": "0x10000" }
+      ]
+    }
+  ]
+}

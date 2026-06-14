@@ -1,0 +1,132 @@
+{
+  "projects": [
+    {
+      "id": "esp-mqtt-controller",
+      "name": "ESP MQTT Controller",
+      "description": "A lightweight MQTT-based IoT controller for ESP32. Monitor sensors, control relays, and publish data to any MQTT broker with automatic reconnection and secure TLS support.",
+      "version": "2.1.0",
+      "lastUpdated": "2026-05-28",
+      "boards": ["ESP32", "ESP32-S3", "ESP32-C3"],
+      "tags": ["ESP32", "IoT", "MQTT", "Sensor"],
+      "manifestPath": "/projects/esp-mqtt-controller/manifest.json",
+      "githubUrl": "https://github.com/flashie/esp-mqtt-controller",
+      "docsUrl": "/docs#esp-mqtt-controller",
+      "tutorialUrl": "/docs#esp-mqtt-controller-tutorial",
+      "status": "Stable",
+      "featured": true,
+      "downloads": 1820,
+      "notes": [
+        {
+          "title": "First Time Flashing",
+          "content": "Make sure your ESP32 is connected via USB. Press and hold the BOOT button, press the EN button once, then release the BOOT button to enter flashing mode."
+        },
+        {
+          "title": "WiFi Configuration",
+          "content": "After flashing, the device will create a WiFi access point named 'ESP-Config-XXXX'. Connect to it and follow the setup portal to configure your WiFi credentials."
+        }
+      ],
+      "changelog": [
+        {
+          "version": "2.1.0",
+          "date": "2026-05-28",
+          "changes": ["Added TLS certificate validation", "Improved MQTT reconnection logic", "Reduced memory usage by 15%"]
+        },
+        {
+          "version": "2.0.0",
+          "date": "2026-04-10",
+          "changes": ["Complete rewrite with ESP-IDF v5", "New web-based configuration portal", "Support for ESP32-S3 and ESP32-C3"]
+        }
+      ]
+    },
+    {
+      "id": "esp-ble-sensor",
+      "name": "ESP BLE Sensor Hub",
+      "description": "Bluetooth Low Energy sensor hub for ESP32. Reads data from BLE-enabled temperature, humidity, and pressure sensors and forwards them via WiFi or serial output.",
+      "version": "1.3.2",
+      "lastUpdated": "2026-05-15",
+      "boards": ["ESP32", "ESP32-S3"],
+      "tags": ["ESP32", "BLE", "Sensor", "Telemetry"],
+      "manifestPath": "/projects/esp-ble-sensor/manifest.json",
+      "githubUrl": "https://github.com/flashie/esp-ble-sensor",
+      "docsUrl": "/docs#esp-ble-sensor",
+      "tutorialUrl": "/docs#esp-ble-sensor-tutorial",
+      "status": "Stable",
+      "featured": true,
+      "downloads": 1340,
+      "notes": [
+        {
+          "title": "BLE Compatibility",
+          "content": "This firmware requires a board with BLE support. ESP32 and ESP32-S3 are fully supported. ESP8266 does not support BLE."
+        }
+      ],
+      "changelog": [
+        {
+          "version": "1.3.2",
+          "date": "2026-05-15",
+          "changes": ["Fixed BLE scan filtering issue", "Improved battery life in deep sleep mode"]
+        },
+        {
+          "version": "1.3.0",
+          "date": "2026-04-20",
+          "changes": ["Added support for BME280 environmental sensor", "New MQTT auto-discovery payload format"]
+        }
+      ]
+    },
+    {
+      "id": "stm32-usb-hid",
+      "name": "STM32 USB HID",
+      "description": "Custom USB HID firmware for STM32 boards. Transform your STM32 into a programmable keyboard, mouse, or gamepad with configurable button mappings.",
+      "version": "1.0.1",
+      "lastUpdated": "2026-05-01",
+      "boards": ["STM32F103", "STM32F4", "STM32G0"],
+      "tags": ["STM32", "USB HID", "Robot"],
+      "manifestPath": "/projects/stm32-usb-hid/manifest.json",
+      "githubUrl": "https://github.com/flashie/stm32-usb-hid",
+      "docsUrl": "/docs#stm32-usb-hid",
+      "tutorialUrl": "/docs#stm32-usb-hid-tutorial",
+      "status": "Beta",
+      "featured": false,
+      "downloads": 760,
+      "notes": [
+        {
+          "title": "Bootloader Mode",
+          "content": "To enter bootloader mode on STM32 boards, set BOOT0 pin to HIGH and BOOT1 pin to LOW, then press the RESET button. Use the browser-based DFU flasher to upload the firmware."
+        },
+        {
+          "title": "Driver Setup",
+          "content": "Windows users may need to install the Zadig driver tool to replace the default STM32 WinUSB driver for DFU mode. macOS and Linux typically work out of the box."
+        }
+      ],
+      "changelog": [
+        {
+          "version": "1.0.1",
+          "date": "2026-05-01",
+          "changes": ["Fixed HID descriptor parsing for gamepad mode", "Improved STM32G0 compatibility"]
+        }
+      ]
+    },
+    {
+      "id": "arduino-blink",
+      "name": "Arduino Blink Pro",
+      "description": "Advanced blink firmware for Arduino boards with configurable patterns, PWM brightness control, and multiple animation modes accessible via serial commands.",
+      "version": "0.9.0",
+      "lastUpdated": "2026-04-05",
+      "boards": ["Arduino Uno", "Arduino Nano", "Arduino Mega"],
+      "tags": ["Arduino", "LED", "Beginner"],
+      "manifestPath": "/projects/arduino-blink/manifest.json",
+      "githubUrl": "https://github.com/flashie/arduino-blink",
+      "docsUrl": "/docs#arduino-blink",
+      "tutorialUrl": "/docs#arduino-blink-tutorial",
+      "status": "Development",
+      "featured": false,
+      "downloads": 420,
+      "changelog": [
+        {
+          "version": "0.9.0",
+          "date": "2026-04-05",
+          "changes": ["Initial beta release", "6 animation modes", "Serial command interface"]
+        }
+      ]
+    }
+  ]
+}

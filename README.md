@@ -1,36 +1,173 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Flashie
+
+A browser-based firmware flashing platform. Flash firmware to ESP32, ESP8266, STM32, and Arduino boards directly from Chrome or Microsoft Edge — no desktop software required.
+
+Built with Next.js, TypeScript, Tailwind CSS, and shadcn/ui. Designed for GitHub Pages static hosting.
+
+## Features
+
+- **Browser-based flashing** using Web Serial API and ESP Web Tools
+- **Multi-board support** — ESP32, ESP8266, STM32, Arduino, and custom boards
+- **Project management** interface for adding and editing firmware projects
+- **Search and filters** — find projects by name, board, or tag
+- **Changelog** for each project showing version history
+- **Dark theme** — lightweight, responsive, optimized for low-end devices
+- **Static export** — deployable to GitHub Pages or any static host
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Build for production
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The development server runs at `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+flashie/
+├── public/
+│   └── projects/              # Firmware project manifests and binaries
+│       ├── esp-mqtt-controller/
+│       │   ├── manifest.json
+│       │   └── firmware/
+│       │       ├── bootloader.bin
+│       │       ├── partitions.bin
+│       │       └── firmware.bin
+│       └── ...
+├── src/
+│   ├── app/                   # Next.js App Router pages
+│   │   ├── page.tsx           # Homepage
+│   │   ├── manage/page.tsx    # Project management interface
+│   │   ├── docs/page.tsx      # Documentation
+│   │   ├── troubleshoot/page.tsx
+│   │   ├── verify/page.tsx    # Deployment verification checklist
+│   │   └── projects/[slug]/   # Dynamic project detail pages
+│   ├── components/            # Reusable UI components
+│   │   ├── ProjectCard.tsx
+│   │   ├── FlashButton.tsx    # ESP Web Tools integration
+│   │   ├── ProjectList.tsx    # Search + filter + grid
+│   │   └── ...
+│   ├── data/
+│   │   └── projects.json      # Project registry
+│   ├── lib/
+│   │   ├── projects.ts        # Data fetching utilities
+│   │   └── utils.ts           # cn() helper
+│   └── types/
+│       └── index.ts           # TypeScript interfaces
+├── next.config.ts             # Static export configuration
+└── package.json
+```
 
-## Learn More
+## Adding a New Firmware Project
 
-To learn more about Next.js, take a look at the following resources:
+### 1. Create the folder structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+public/projects/your-project/
+├── manifest.json
+└── firmware/
+    ├── bootloader.bin
+    ├── partitions.bin
+    └── firmware.bin
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 2. Create manifest.json
 
-## Deploy on Vercel
+```json
+{
+  "name": "Your Project",
+  "version": "1.0.0",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "firmware/bootloader.bin", "offset": "0x1000" },
+        { "path": "firmware/partitions.bin", "offset": "0x8000" },
+        { "path": "firmware/firmware.bin", "offset": "0x10000" }
+      ]
+    }
+  ]
+}
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Firmware paths are **relative** to the manifest file. Offsets must be strings with double quotes.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 3. Register in projects.json
+
+Add an entry to `src/data/projects.json`:
+
+```json
+{
+  "id": "your-project",
+  "name": "Your Project",
+  "description": "Description of your firmware.",
+  "version": "1.0.0",
+  "lastUpdated": "2026-06-01",
+  "boards": ["ESP32"],
+  "tags": ["ESP32", "IoT"],
+  "manifestPath": "/projects/your-project/manifest.json",
+  "githubUrl": "https://github.com/your/repo",
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-06-01",
+      "changes": ["Initial release"]
+    }
+  ]
+}
+```
+
+### 4. Rebuild
+
+```bash
+npm run build
+```
+
+## Deployment
+
+Flashie is pre-configured for GitHub Pages static export via `.github/workflows/deploy.yml`. Push to the `main` branch and GitHub Actions will build and deploy automatically.
+
+### Manual deployment
+
+```bash
+npm run build
+# Output is in the out/ directory
+# Deploy out/ to any static host
+```
+
+If deploying to a sub-path (e.g. `https://user.github.io/flashie/`), update `basePath` in `next.config.ts`.
+
+### Verification
+
+After deploying, run through the [Verification Checklist](/verify) to confirm everything works.
+
+## Browser Support
+
+| Browser | Status |
+|---------|--------|
+| Google Chrome 89+ | Fully supported |
+| Microsoft Edge 89+ | Fully supported |
+| Mozilla Firefox | Not supported (no Web Serial API) |
+| Safari | Not supported (no Web Serial API) |
+| Mobile browsers | Not supported |
+
+## Technology Stack
+
+- **Framework**: Next.js (static export)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4 + shadcn/ui
+- **Flashing**: ESP Web Tools (Web Serial API)
+- **Deployment**: GitHub Pages (via GitHub Actions)
+
+## License
+
+MIT
