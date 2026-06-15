@@ -71,7 +71,7 @@ export class GithubStorage {
     owner: string,
     repo: string,
     branch = 'main',
-    baseFolder = 'My Code',
+    baseFolder = '',
   ) {
     this.token = token
     this.owner = owner
@@ -82,6 +82,10 @@ export class GithubStorage {
 
   private api(path: string) {
     return `${GITHUB_API}/repos/${this.owner}/${this.repo}/contents/${path}`
+  }
+
+  private joinPath(...segments: string[]): string {
+    return segments.filter(Boolean).join('/')
   }
 
   private async get<T>(path: string): Promise<T> {
@@ -146,7 +150,7 @@ export class GithubStorage {
       let entries: DirEntry[]
 
       try {
-        entries = await this.get<DirEntry[]>(`${this.baseFolder}/${category}`)
+        entries = await this.get<DirEntry[]>(this.joinPath(this.baseFolder, category))
       } catch {
         continue
       }
@@ -196,7 +200,7 @@ export class GithubStorage {
 
   async getProjectManifest(category: BoardCategory, projectId: string): Promise<FlashManifest> {
     const data = await this.get<{ download_url: string }>(
-      `${this.baseFolder}/${category}/${projectId}/manifest.json`,
+      this.joinPath(this.baseFolder, category, projectId, 'manifest.json'),
     )
 
     const res = await fetch(data.download_url)
@@ -222,7 +226,7 @@ export class GithubStorage {
     )
 
     await this.put(
-      `${this.baseFolder}/${category}/${projectId}/${fileName}`,
+      this.joinPath(this.baseFolder, category, projectId, fileName),
       base64,
       message,
     )
@@ -238,7 +242,7 @@ export class GithubStorage {
     const base64 = btoa(unescape(encodeURIComponent(json)))
 
     await this.put(
-      `${this.baseFolder}/${category}/${projectId}/manifest.json`,
+      this.joinPath(this.baseFolder, category, projectId, 'manifest.json'),
       base64,
       message,
     )
