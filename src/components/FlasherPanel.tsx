@@ -7,13 +7,7 @@ interface FlasherPanelProps {
   getFileData: (path: string) => Promise<ArrayBuffer>
 }
 
-type PanelStatus =
-  | 'idle'
-  | 'connecting'
-  | 'connected'
-  | 'flashing'
-  | 'erasing'
-  | 'disconnecting'
+type PanelStatus = 'idle' | 'connecting' | 'connected' | 'flashing' | 'erasing' | 'disconnecting'
 
 const CHIP_NAME_TO_FAMILY: Record<string, ChipFamily> = {
   ESP32: 'ESP32',
@@ -25,6 +19,15 @@ const CHIP_NAME_TO_FAMILY: Record<string, ChipFamily> = {
 
 function formatOffset(offset: number): string {
   return `0x${offset.toString(16).toUpperCase().padStart(8, '0')}`
+}
+
+const STATUS_LABEL: Record<PanelStatus, string> = {
+  idle: 'Disconnected',
+  connecting: 'Connecting…',
+  connected: 'Connected',
+  flashing: 'Flashing…',
+  erasing: 'Erasing…',
+  disconnecting: 'Disconnecting…',
 }
 
 function FlasherPanel({ manifest, getFileData }: FlasherPanelProps) {
@@ -39,8 +42,7 @@ function FlasherPanel({ manifest, getFileData }: FlasherPanelProps) {
   const esploaderRef = useRef<ESPLoader | null>(null)
   const logEndRef = useRef<HTMLDivElement>(null)
 
-  const supportsSerial =
-    typeof navigator !== 'undefined' && 'serial' in navigator
+  const supportsSerial = typeof navigator !== 'undefined' && 'serial' in navigator
 
   const appendLog = useCallback((...lines: string[]) => {
     setLog((prev) => [...prev, ...lines])
@@ -128,19 +130,10 @@ function FlasherPanel({ manifest, getFileData }: FlasherPanelProps) {
     const transport = transportRef.current
 
     if (esploader) {
-      try {
-        await esploader.after('hard_reset')
-      } catch {
-        // ignore reset errors during disconnect
-      }
+      try { await esploader.after('hard_reset') } catch { /* ignore */ }
     }
-
     if (transport) {
-      try {
-        await transport.disconnect()
-      } catch {
-        // ignore disconnect errors
-      }
+      try { await transport.disconnect() } catch { /* ignore */ }
     }
 
     transportRef.current = null
@@ -154,32 +147,18 @@ function FlasherPanel({ manifest, getFileData }: FlasherPanelProps) {
 
   const findMatchingBuild = useCallback(() => {
     if (!detectedChip) return null
-
-    const match = manifest.builds.find(
-      (b) => b.chipFamily === detectedChip,
-    )
+    const match = manifest.builds.find((b) => b.chipFamily === detectedChip)
     if (match) return match
-
-    appendLog(
-      `Warning: No build in manifest matches detected chip ${detectedChip}. Using first build.`,
-    )
+    appendLog(`Warning: No build matches detected chip ${detectedChip}. Using first build.`)
     return manifest.builds[0] ?? null
   }, [detectedChip, manifest.builds, appendLog])
 
   const handleFlash = useCallback(async () => {
     const esploader = esploaderRef.current
-    if (!esploader) {
-      setError('Not connected')
-      return
-    }
+    if (!esploader) { setError('Not connected'); return }
 
     const build = findMatchingBuild()
-    if (!build) {
-      const msg = 'No builds available in manifest'
-      appendLog(msg)
-      setError(msg)
-      return
-    }
+    if (!build) { const msg = 'No builds available'; appendLog(msg); setError(msg); return }
 
     setError(null)
     setStatus('flashing')
@@ -187,10 +166,7 @@ function FlasherPanel({ manifest, getFileData }: FlasherPanelProps) {
 
     try {
       const parts = build.parts
-      const fileData = await Promise.all(
-        parts.map((p) => getFileData(p.path)),
-      )
-
+      const fileData = await Promise.all(parts.map((p) => getFileData(p.path)))
       const totalBytes = fileData.reduce((s, d) => s + d.byteLength, 0)
       let bytesDone = 0
 
@@ -208,27 +184,16 @@ function FlasherPanel({ manifest, getFileData }: FlasherPanelProps) {
         compress: true,
         reportProgress: (_fileIndex, written, total) => {
           const fileFraction = total > 0 ? written / total : 0
-          const overall =
-            totalBytes > 0
-              ? Math.min(
-                  100,
-                  Math.round(
-                    ((bytesDone + fileFraction * fileData[_fileIndex].byteLength) /
-                      totalBytes) *
-                      100,
-                  ),
-                )
-              : 0
+          const overall = totalBytes > 0
+            ? Math.min(100, Math.round(((bytesDone + fileFraction * fileData[_fileIndex].byteLength) / totalBytes) * 100))
+            : 0
           setFlashProgress(overall)
         },
       })
 
-      for (const data of fileData) {
-        bytesDone += data.byteLength
-      }
+      for (const data of fileData) { bytesDone += data.byteLength }
       setFlashProgress(100)
       appendLog('Flash complete!')
-
       await esploader.after('hard_reset')
       appendLog('Device reset.')
     } catch (err) {
@@ -242,15 +207,10 @@ function FlasherPanel({ manifest, getFileData }: FlasherPanelProps) {
 
   const handleErase = useCallback(async () => {
     const esploader = esploaderRef.current
-    if (!esploader) {
-      setError('Not connected')
-      return
-    }
-
+    if (!esploader) { setError('Not connected'); return }
     setError(null)
     setStatus('erasing')
     appendLog('Erasing flash (this may take a while)…')
-
     try {
       await esploader.eraseFlash()
       appendLog('Erase complete.')
@@ -268,119 +228,79 @@ function FlasherPanel({ manifest, getFileData }: FlasherPanelProps) {
       <section className="flasher-panel">
         <div className="flasher-error">
           <strong>Web Serial not supported</strong>
-          <p>
-            Chrome or Edge on desktop is required. Web Serial is not available
-            on Firefox, Safari, or iOS browsers.
-          </p>
+          <p style={{ marginTop: 4 }}>Chrome or Edge on desktop is required. Web Serial is not available on Firefox, Safari, or iOS.</p>
         </div>
       </section>
     )
   }
 
-  const chipMismatch =
-    detectedChip &&
-    manifest.builds.length > 0 &&
+  const chipMismatch = detectedChip && manifest.builds.length > 0 &&
     !manifest.builds.some((b) => b.chipFamily === detectedChip)
 
   return (
     <section className="flasher-panel">
-      {/* -------- Device controls -------- */}
-      <div className="flasher-controls">
-        {status === 'idle' ? (
-          <button
-            type="button"
-            className="flasher-btn"
-            onClick={handleConnect}
-          >
-            Connect Device
-          </button>
-        ) : status === 'connecting' ? (
-          <button type="button" className="flasher-btn" disabled>
-            Connecting…
-          </button>
-        ) : (
-          <>
-            <button
-              type="button"
-              className="flasher-btn"
-              onClick={handleFlash}
-              disabled={status === 'flashing' || !detectedChip}
-            >
-              {status === 'flashing' ? 'Flashing…' : 'Flash'}
-            </button>
-            <button
-              type="button"
-              className="flasher-btn flasher-btn-secondary"
-              onClick={handleErase}
-              disabled={status === 'erasing'}
-            >
-              {status === 'erasing' ? 'Erasing…' : 'Erase Flash'}
-            </button>
-            <button
-              type="button"
-              className="flasher-btn flasher-btn-secondary"
-              onClick={handleDisconnect}
-              disabled={status === 'disconnecting'}
-            >
-              Disconnect
-            </button>
-          </>
-        )}
+      {/* Connection status */}
+      <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px' }}>
+        <div>
+          <span className={`status-dot ${status}`}>{STATUS_LABEL[status]}</span>
+          {detectedChip && (
+            <span style={{ marginLeft: 14, fontSize: 12, color: 'var(--text-muted)' }}>
+              {chipDescription} ({detectedChip})
+            </span>
+          )}
+        </div>
+        <div className="flasher-controls">
+          {status === 'idle' ? (
+            <button type="button" className="btn btn-primary" onClick={handleConnect}>Connect Device</button>
+          ) : (
+            <>
+              <button type="button" className="btn btn-primary" onClick={handleFlash}
+                disabled={status === 'flashing' || !detectedChip}>
+                {status === 'flashing' ? 'Flashing…' : 'Flash'}
+              </button>
+              <button type="button" className="btn" onClick={handleErase}
+                disabled={status === 'erasing'}>
+                {status === 'erasing' ? 'Erasing…' : 'Erase Flash'}
+              </button>
+              <button type="button" className="btn" onClick={handleDisconnect}>
+                Disconnect
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* -------- Chip info & warnings -------- */}
-      {detectedChip && (
-        <div className="flasher-chip-info">
-          Detected: <strong>{chipDescription}</strong> ({detectedChip})
-        </div>
-      )}
       {chipMismatch && (
         <div className="flasher-warning">
-          Warning: detected chip ({detectedChip}) does not match any build in
-          the manifest. Flashing may fail.
+          Warning: detected chip ({detectedChip}) does not match any build in the manifest.
         </div>
       )}
 
-      {/* -------- Progress bar -------- */}
+      {/* Progress bar */}
       {status === 'flashing' && (
         <div className="flasher-progress-bar">
-          <div
-            className="flasher-progress-fill"
-            style={{ width: `${flashProgress}%` }}
-          />
-          <span className="flasher-progress-text">{flashProgress}%</span>
+          <div className="flasher-progress-fill" style={{ width: `${flashProgress}%` }} />
         </div>
       )}
 
-      {/* -------- Error -------- */}
-      {error && (
-        <div className="flasher-error">
-          <strong>Error:</strong> {error}
-        </div>
-      )}
+      {/* Error */}
+      {error && <div className="flasher-error"><strong>Error:</strong> {error}</div>}
 
-      {/* -------- Parts table -------- */}
+      {/* Parts listing */}
       <div className="flasher-parts">
         <strong>Manifest builds:</strong>
         <ul>
           {manifest.builds.map((build, i) => (
             <li key={i}>
-              {build.chipFamily} —{' '}
-              {build.parts
-                .map((p) => `${p.path} @ ${formatOffset(p.offset)}`)
-                .join(', ')}
+              {build.chipFamily} — {build.parts.map((p) => `${p.path} @ ${formatOffset(p.offset)}`).join(', ')}
             </li>
           ))}
         </ul>
       </div>
 
-      {/* -------- Live log -------- */}
+      {/* Terminal log */}
       <div className="flasher-log">
-        {log.map((line, i) => (
-          <div key={i} className="flasher-log-line">
-            {line}
-          </div>
-        ))}
+        {log.map((line, i) => <div key={i} className="flasher-log-line">{line}</div>)}
         <div ref={logEndRef} />
       </div>
     </section>

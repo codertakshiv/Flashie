@@ -1,5 +1,7 @@
 export type ChipFamily = "ESP32" | "ESP32-S2" | "ESP32-S3" | "ESP32-C3" | "ESP8266"
 
+export type BoardCategory = "ARDUINO" | "ESP" | "STM32"
+
 export interface ManifestPart {
   path: string
   offset: number
@@ -29,6 +31,7 @@ export interface Project {
   id: string
   name: string
   description?: string
+  category?: BoardCategory
   manifest: FlashManifest
   files: ProjectFile[]
   source: "github" | "local"

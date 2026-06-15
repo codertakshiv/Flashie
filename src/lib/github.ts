@@ -1,6 +1,8 @@
-import type { FlashManifest, Project, ProjectFile } from '../types/project'
+import type { BoardCategory, FlashManifest, Project, ProjectFile } from '../types/project'
 
 const GITHUB_API = 'https://api.github.com'
+
+const CATEGORIES: BoardCategory[] = ['ARDUINO', 'ESP', 'STM32']
 
 function githubFetch(url: string, token: string, init?: RequestInit) {
   return fetch(url, {
@@ -36,10 +38,7 @@ async function checkResponse(response: Response, context: string) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Optional localStorage helpers – use at your own risk.              */
-/*  Storing a PAT in localStorage is less secure than session-only.   */
-/*  The token is persisted in plain text and accessible to any JS     */
-/*  running on the same origin.                                       */
+/*  Optional localStorage helpers                                      */
 /* ------------------------------------------------------------------ */
 
 const STORAGE_KEY = 'web-flasher:github-token'
@@ -65,17 +64,20 @@ export class GithubStorage {
   private owner: string
   private repo: string
   private branch: string
+  private baseFolder: string
 
   constructor(
     token: string,
     owner: string,
     repo: string,
     branch = 'main',
+    baseFolder = 'My Code',
   ) {
     this.token = token
     this.owner = owner
     this.repo = repo
     this.branch = branch
+    this.baseFolder = baseFolder
   }
 
   private api(path: string) {
@@ -138,54 +140,63 @@ export class GithubStorage {
     type DirEntry = { name: string; type: string; path: string; download_url: string | null }
     type FileEntry = DirEntry & { sha: string; size: number }
 
-    const entries = await this.get<DirEntry[]>('projects')
+    const all: Project[] = []
 
-    const projectDirs = entries.filter((e) => e.type === 'dir')
+    for (const category of CATEGORIES) {
+      let entries: DirEntry[]
 
-    const projects = await Promise.all(
-      projectDirs.map(async (dir) => {
-        try {
-          const files = await this.get<FileEntry[]>(dir.path)
+      try {
+        entries = await this.get<DirEntry[]>(`${this.baseFolder}/${category}`)
+      } catch {
+        continue
+      }
 
-          const manifestFile = files.find(
-            (f) => f.name === 'manifest.json',
-          )
-          if (!manifestFile) return null
+      const projectDirs = entries.filter((e) => e.type === 'dir')
 
-          const manifestRes = await fetch(manifestFile.download_url!)
-          const manifest: FlashManifest = await manifestRes.json()
+      const projects = await Promise.all(
+        projectDirs.map(async (dir) => {
+          try {
+            const files = await this.get<FileEntry[]>(dir.path)
 
-          const projectFiles: ProjectFile[] = files
-            .filter(
-              (f) => f.name.endsWith('.bin') || f.name === 'manifest.json',
-            )
-            .map((f) => ({
-              name: f.name,
-              sizeBytes: f.size,
-              sha: f.sha,
-              downloadUrl: f.download_url ?? undefined,
-            }))
+            const manifestFile = files.find((f) => f.name === 'manifest.json')
+            if (!manifestFile) return null
 
-          return {
-            id: dir.name,
-            name: manifest.name,
-            manifest,
-            files: projectFiles,
-            source: 'github' as const,
-            createdAt: '',
+            const manifestRes = await fetch(manifestFile.download_url!)
+            const manifest: FlashManifest = await manifestRes.json()
+
+            const projectFiles: ProjectFile[] = files
+              .filter((f) => f.name.endsWith('.bin') || f.name === 'manifest.json')
+              .map((f) => ({
+                name: f.name,
+                sizeBytes: f.size,
+                sha: f.sha,
+                downloadUrl: f.download_url ?? undefined,
+              }))
+
+            return {
+              id: dir.name,
+              name: manifest.name,
+              category,
+              manifest,
+              files: projectFiles,
+              source: 'github' as const,
+              createdAt: '',
+            }
+          } catch {
+            return null
           }
-        } catch {
-          return null
-        }
-      }),
-    )
+        }),
+      )
 
-    return projects.filter((p) => p !== null) as Project[]
+      all.push(...projects.filter((p) => p !== null) as Project[])
+    }
+
+    return all
   }
 
-  async getProjectManifest(projectId: string): Promise<FlashManifest> {
+  async getProjectManifest(category: BoardCategory, projectId: string): Promise<FlashManifest> {
     const data = await this.get<{ download_url: string }>(
-      `projects/${projectId}/manifest.json`,
+      `${this.baseFolder}/${category}/${projectId}/manifest.json`,
     )
 
     const res = await fetch(data.download_url)
@@ -197,6 +208,7 @@ export class GithubStorage {
   }
 
   async uploadProjectFile(
+    category: BoardCategory,
     projectId: string,
     fileName: string,
     fileData: ArrayBuffer,
@@ -209,10 +221,15 @@ export class GithubStorage {
       ),
     )
 
-    await this.put(`projects/${projectId}/${fileName}`, base64, message)
+    await this.put(
+      `${this.baseFolder}/${category}/${projectId}/${fileName}`,
+      base64,
+      message,
+    )
   }
 
   async uploadManifest(
+    category: BoardCategory,
     projectId: string,
     manifest: FlashManifest,
     message: string,
@@ -220,19 +237,24 @@ export class GithubStorage {
     const json = JSON.stringify(manifest, null, 2)
     const base64 = btoa(unescape(encodeURIComponent(json)))
 
-    await this.put(`projects/${projectId}/manifest.json`, base64, message)
+    await this.put(
+      `${this.baseFolder}/${category}/${projectId}/manifest.json`,
+      base64,
+      message,
+    )
   }
 
   async createProject(
     name: string,
     manifest: FlashManifest,
+    category: BoardCategory,
   ): Promise<string> {
     const projectId = name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
 
-    await this.uploadManifest(projectId, manifest, `Create project ${name}`)
+    await this.uploadManifest(category, projectId, manifest, `Create project ${name}`)
 
     return projectId
   }

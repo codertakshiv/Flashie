@@ -2,10 +2,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useStorage } from '../lib/StorageContext'
 import FlasherPanel from './FlasherPanel'
-import type { FlashManifest } from '../types/project'
+import type { BoardCategory, FlashManifest } from '../types/project'
 
 function ProjectDetail() {
-  const { id } = useParams<{ id: string }>()
+  const { category, id } = useParams<{ category: BoardCategory; id: string }>()
   const { storage, mode } = useStorage()
 
   const [manifest, setManifest] = useState<FlashManifest | null>(null)
@@ -14,17 +14,15 @@ function ProjectDetail() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!id) return
+    if (!id || !category) return
 
     let cancelled = false
     setLoading(true)
     setError(null)
 
     storage
-      .getProjectManifest(id)
-      .then((m) => {
-        if (!cancelled) setManifest(m)
-      })
+      .getProjectManifest(category, id)
+      .then((m) => { if (!cancelled) setManifest(m) })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err))
       })
@@ -33,7 +31,7 @@ function ProjectDetail() {
       .listProjects()
       .then((projects) => {
         if (cancelled) return
-        const project = projects.find((p) => p.id === id)
+        const project = projects.find((p) => p.id === id && p.category === category)
         if (project) {
           const map = new Map<string, string>()
           for (const f of project.files) {
@@ -42,37 +40,29 @@ function ProjectDetail() {
           if (!cancelled) setFileMap(map)
         }
       })
-      .catch(() => {
-        /* non-critical — file download URLs may be absent */
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false) })
 
-    return () => {
-      cancelled = true
-    }
-  }, [id, storage])
+    return () => { cancelled = true }
+  }, [id, category, storage])
 
   const getFileData = useCallback(
     async (path: string): Promise<ArrayBuffer> => {
       if (mode === 'local') {
-        return storage.downloadFile(`${id}/${path}`)
+        return storage.downloadFile(`${category}/${id}/${path}`)
       }
       const url = fileMap.get(path)
       if (!url) throw new Error(`No download URL available for "${path}"`)
       return storage.downloadFile(url)
     },
-    [mode, id, storage, fileMap],
+    [mode, category, id, storage, fileMap],
   )
 
   if (loading) {
     return (
       <section>
-        <p>
-          <Link to="/">← Back to projects</Link>
-        </p>
-        <p>Loading project…</p>
+        <p><Link to="/">← Back to projects</Link></p>
+        <p style={{ color: 'var(--text-muted)' }}>Loading project…</p>
       </section>
     )
   }
@@ -80,12 +70,8 @@ function ProjectDetail() {
   if (error) {
     return (
       <section>
-        <p>
-          <Link to="/">← Back to projects</Link>
-        </p>
-        <div className="flasher-error">
-          <strong>Error:</strong> {error}
-        </div>
+        <p><Link to="/">← Back to projects</Link></p>
+        <div className="flasher-error"><strong>Error:</strong> {error}</div>
       </section>
     )
   }
@@ -93,9 +79,7 @@ function ProjectDetail() {
   if (!manifest) {
     return (
       <section>
-        <p>
-          <Link to="/">← Back to projects</Link>
-        </p>
+        <p><Link to="/">← Back to projects</Link></p>
         <p>Project not found.</p>
       </section>
     )
@@ -105,19 +89,19 @@ function ProjectDetail() {
 
   return (
     <section>
-      <p>
-        <Link to="/">← Back to projects</Link>
-      </p>
+      <p><Link to="/">← Back to projects</Link></p>
 
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ margin: '8px 0' }}>{manifest.name}</h1>
-        <p style={{ color: 'var(--text)', fontSize: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+          <span className={`category-pill ${category}`}>{category}</span>
+        </div>
+        <h1 style={{ margin: '4px 0 2px' }}>{manifest.name}</h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
           v{manifest.version} &middot; {chipFamilies.join(', ')}
         </p>
       </div>
 
-      <div style={{ marginBottom: 24 }}>
-        <h2>Files</h2>
+      <div className="card" style={{ marginBottom: 24, padding: 0, overflow: 'hidden' }}>
         <table className="file-table">
           <thead>
             <tr>
@@ -132,9 +116,7 @@ function ProjectDetail() {
                 <tr key={`${build.chipFamily}-${idx}`}>
                   <td>{part.path}</td>
                   <td>—</td>
-                  <td>
-                    <code>0x{part.offset.toString(16).toUpperCase().padStart(8, '0')}</code>
-                  </td>
+                  <td><code>0x{part.offset.toString(16).toUpperCase().padStart(8, '0')}</code></td>
                 </tr>
               )),
             )}

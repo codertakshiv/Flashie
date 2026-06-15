@@ -1,4 +1,4 @@
-import type { FlashManifest, Project, ProjectFile } from '../types/project'
+import type { BoardCategory, FlashManifest, Project, ProjectFile } from '../types/project'
 
 /* ------------------------------------------------------------------ */
 /*  StorageAdapter interface                                           */
@@ -6,19 +6,21 @@ import type { FlashManifest, Project, ProjectFile } from '../types/project'
 
 export interface StorageAdapter {
   listProjects(): Promise<Project[]>
-  getProjectManifest(id: string): Promise<FlashManifest>
+  getProjectManifest(category: BoardCategory, id: string): Promise<FlashManifest>
   uploadProjectFile(
+    category: BoardCategory,
     id: string,
     fileName: string,
     data: ArrayBuffer,
     message: string,
   ): Promise<void>
   uploadManifest(
+    category: BoardCategory,
     id: string,
     manifest: FlashManifest,
     message: string,
   ): Promise<void>
-  createProject(name: string, manifest: FlashManifest): Promise<string>
+  createProject(name: string, manifest: FlashManifest, category: BoardCategory): Promise<string>
   downloadFile(ref: string): Promise<ArrayBuffer>
 }
 
@@ -27,6 +29,7 @@ export interface StorageAdapter {
 /* ------------------------------------------------------------------ */
 
 interface LocalProjectEntry {
+  category: BoardCategory
   manifest: FlashManifest
   files: Map<string, ArrayBuffer>
 }
@@ -48,6 +51,7 @@ export class LocalStorageAdapter implements StorageAdapter {
       result.push({
         id,
         name: entry.manifest.name,
+        category: entry.category,
         manifest: entry.manifest,
         files,
         source: 'local',
@@ -57,35 +61,40 @@ export class LocalStorageAdapter implements StorageAdapter {
     return result
   }
 
-  async getProjectManifest(id: string): Promise<FlashManifest> {
-    const entry = this.projects.get(id)
+  async getProjectManifest(category: BoardCategory, id: string): Promise<FlashManifest> {
+    const key = `${category}/${id}`
+    const entry = this.projects.get(key)
     if (!entry) {
-      throw new Error(`Project "${id}" not found in local storage`)
+      throw new Error(`Project "${key}" not found in local storage`)
     }
     return entry.manifest
   }
 
   async uploadProjectFile(
+    category: BoardCategory,
     id: string,
     fileName: string,
     data: ArrayBuffer,
     _message: string,
   ): Promise<void> {
-    const entry = this.projects.get(id)
+    const key = `${category}/${id}`
+    const entry = this.projects.get(key)
     if (!entry) {
-      throw new Error(`Project "${id}" not found in local storage`)
+      throw new Error(`Project "${key}" not found in local storage`)
     }
     entry.files.set(fileName, data)
   }
 
   async uploadManifest(
+    category: BoardCategory,
     id: string,
     manifest: FlashManifest,
     _message: string,
   ): Promise<void> {
-    const entry = this.projects.get(id)
+    const key = `${category}/${id}`
+    const entry = this.projects.get(key)
     if (!entry) {
-      throw new Error(`Project "${id}" not found in local storage`)
+      throw new Error(`Project "${key}" not found in local storage`)
     }
     entry.manifest = manifest
   }
@@ -93,26 +102,30 @@ export class LocalStorageAdapter implements StorageAdapter {
   async createProject(
     name: string,
     manifest: FlashManifest,
+    category: BoardCategory,
   ): Promise<string> {
     const id = name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
-    this.projects.set(id, { manifest, files: new Map() })
+    const key = `${category}/${id}`
+    this.projects.set(key, { category, manifest, files: new Map() })
     return id
   }
 
   async downloadFile(ref: string): Promise<ArrayBuffer> {
     const parts = ref.split('/')
-    const projectId = parts[0]
-    const fileName = parts.slice(1).join('/')
-    const entry = this.projects.get(projectId)
+    const category = parts[0] as BoardCategory
+    const projectId = parts[1]
+    const fileName = parts.slice(2).join('/')
+    const key = `${category}/${projectId}`
+    const entry = this.projects.get(key)
     if (!entry) {
-      throw new Error(`Project "${projectId}" not found`)
+      throw new Error(`Project "${key}" not found`)
     }
     const data = entry.files.get(fileName)
     if (!data) {
-      throw new Error(`File "${fileName}" not found in project "${projectId}"`)
+      throw new Error(`File "${fileName}" not found in project "${key}"`)
     }
     return data
   }
