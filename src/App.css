@@ -1,0 +1,393 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.nav-links {
+  display: flex;
+  gap: 16px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.nav-links a:hover {
+  color: var(--accent);
+}
+
+.github-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--accent-bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.github-btn:hover {
+  border-color: var(--accent-border);
+}
+
+.main {
+  flex: 1;
+  padding: 32px 24px;
+}
+
+/* -------- FlasherPanel -------- */
+
+.flasher-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 800px;
+}
+
+.flasher-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.flasher-btn {
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--accent-bg);
+  color: var(--text-h);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.flasher-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.flasher-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.flasher-btn-secondary {
+  background: transparent;
+  font-weight: 400;
+}
+
+.flasher-chip-info {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.flasher-warning {
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: rgba(255, 180, 0, 0.12);
+  border: 1px solid rgba(255, 180, 0, 0.4);
+  color: var(--text-h);
+  font-size: 14px;
+}
+
+.flasher-error {
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: rgba(255, 60, 60, 0.1);
+  border: 1px solid rgba(255, 60, 60, 0.35);
+  color: var(--text-h);
+  font-size: 14px;
+}
+
+.flasher-progress-bar {
+  position: relative;
+  height: 24px;
+  background: var(--code-bg);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.flasher-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.flasher-progress-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.flasher-parts {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.flasher-parts ul {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0;
+}
+
+.flasher-parts li {
+  padding: 2px 0;
+}
+
+.flasher-log {
+  height: 240px;
+  overflow-y: auto;
+  background: var(--code-bg);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.flasher-log-line {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* -------- ProjectList -------- */
+
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.project-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--bg);
+}
+
+.project-card-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.project-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+/* -------- File table -------- */
+
+.file-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.file-table th,
+.file-table td {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.file-table th {
+  font-weight: 600;
+  color: var(--text-h);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* -------- ProjectUpload -------- */
+
+.upload-form {
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.upload-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.upload-field label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.upload-field input,
+.upload-field select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.upload-field input:focus,
+.upload-field select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.upload-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.upload-dropzone:hover,
+.upload-dropzone--over {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.upload-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.upload-file-list h2 {
+  font-size: 16px;
+  margin: 0;
+}
+
+.upload-file-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.upload-file-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-h);
+  word-break: break-all;
+}
+
+.upload-file-size {
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.upload-offset-input {
+  width: 120px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  font-family: var(--mono);
+  font-size: 13px;
+  margin-left: 4px;
+}
+
+.upload-offset-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* -------- GithubAuth -------- */
+
+.github-auth {
+  max-width: 520px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.github-auth h2 {
+  margin: 0;
+}
+
+.github-auth-help {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.github-auth-help a {
+  color: var(--accent);
+}
+
+.github-auth-remember {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.github-auth-remember input {
+  margin-top: 2px;
+}
+
+.nav-auth-wrapper {
+  border-bottom: 1px solid var(--border);
+  background: var(--code-bg);
+}
+
+/* -------- ErrorBoundary -------- */
+
+.error-boundary {
+  max-width: 520px;
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.error-boundary h1 {
+  margin: 0;
+}
+
+.upload-progress {
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  color: var(--text-h);
+  font-size: 14px;
+}
